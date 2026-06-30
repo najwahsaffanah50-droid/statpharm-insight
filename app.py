@@ -149,7 +149,7 @@ def make_boxplot(df, group_col, value_col):
     labels = list(data[group_col].dropna().unique())
     values = [data.loc[data[group_col] == label, value_col].astype(float).values for label in labels]
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.boxplot(values, labels=labels, showmeans=True)
+    ax.boxplot(values, tick_labels=labels, showmeans=True)
     ax.set_title(f"Distribusi {value_col} berdasarkan {group_col}")
     ax.set_xlabel(group_col)
     ax.set_ylabel(value_col)
