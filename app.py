@@ -207,17 +207,39 @@ st.caption(APP_SUBTITLE)
 
 with st.sidebar:
     st.header("Pengaturan Data")
-    data_mode = st.radio("Sumber data", ["Gunakan data contoh", "Upload CSV sendiri"])
+    data_mode = st.radio("Sumber data", ["Gunakan data contoh", "Upload file sendiri"])
     st.info("Format data yang disarankan: satu kolom kelompok/formula dan satu atau lebih kolom numerik hasil pengukuran.")
 
 if data_mode == "Gunakan data contoh":
     df = load_example_data()
 else:
-    uploaded = st.sidebar.file_uploader("Upload file CSV", type=["csv"])
-    if uploaded is None:
-        st.warning("Upload file CSV terlebih dahulu, atau gunakan data contoh.")
+    uploaded = st.sidebar.file_uploader(
+    "Upload file data",
+    type=["csv", "xlsx"]
+)
+
+if uploaded is None:
+    st.warning("Upload file CSV atau Excel terlebih dahulu, atau gunakan data contoh.")
+    st.stop()
+
+file_name = uploaded.name.lower()
+
+try:
+    if file_name.endswith(".csv"):
+        df = pd.read_csv(uploaded, sep=None, engine="python", encoding="utf-8-sig")
+    elif file_name.endswith(".xlsx"):
+        excel_file = pd.ExcelFile(uploaded)
+        selected_sheet = st.sidebar.selectbox(
+            "Pilih sheet Excel",
+            excel_file.sheet_names
+        )
+        df = pd.read_excel(excel_file, sheet_name=selected_sheet)
+    else:
+        st.error("Format file belum didukung. Gunakan CSV atau Excel (.xlsx).")
         st.stop()
-    df = pd.read_csv(uploaded)
+except Exception as e:
+    st.error("File tidak dapat dibaca. Pastikan format data sudah benar.")
+    st.stop()
 
 st.subheader("1. Preview Data")
 st.dataframe(df, use_container_width=True)
