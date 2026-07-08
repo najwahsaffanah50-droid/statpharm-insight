@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from openai import OpenAI
 from scipy import stats
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
@@ -257,6 +258,59 @@ else:
 
 st.subheader("1. Preview Data")
 st.dataframe(df, use_container_width=True)
+
+    st.subheader("🤖 2. Analisis Data dengan AI")
+
+    pertanyaan_ai = st.text_area(
+        "Tulis pertanyaan untuk AI:",
+        "Berikan ringkasan, temuan penting, masalah data jika ada, dan kesimpulan dari data ini."
+    )
+
+    if st.button("Analisis dengan AI"):
+        try:
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+            ringkasan_data = f"""
+            Jumlah baris: {df.shape[0]}
+            Jumlah kolom: {df.shape[1]}
+            Nama kolom: {list(df.columns)}
+
+            Contoh 10 data pertama:
+            {df.head(10).to_string()}
+
+            Statistik ringkas:
+            {df.describe(include='all').to_string()}
+            """
+
+            prompt = f"""
+            Anda adalah asisten analis data farmasi/apotek.
+
+            Analisis data berikut dengan bahasa Indonesia yang jelas, singkat, dan mudah dipahami.
+
+            Data:
+            {ringkasan_data}
+
+            Pertanyaan pengguna:
+            {pertanyaan_ai}
+
+            Buat jawaban dengan format:
+            1. Ringkasan data
+            2. Temuan penting
+            3. Masalah pada data jika ada
+            4. Kesimpulan
+            5. Saran singkat
+            """
+
+            response = client.responses.create(
+                model="gpt-4o-mini",
+                input=prompt
+            )
+
+            st.success("Analisis AI berhasil dibuat.")
+            st.write(response.output_text)
+
+        except Exception as e:
+            st.error(f"Terjadi error saat memanggil AI: {e}")
 
 if df.empty:
     st.error("Data kosong. Periksa kembali file CSV Anda.")
